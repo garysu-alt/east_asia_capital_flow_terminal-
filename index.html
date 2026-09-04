@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>East Asia Institutional Capital Flow Terminal</title>
+  <title>East Asia Institutional Capital Flow Terminal PRO</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -27,12 +27,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
 
-  <!-- 載入 React 核心 -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- 載入 Recharts 圖表庫與 PropTypes (指定穩定版本 v2.1.12 避免最新版 UMD 遺失問題) -->
   <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
   <script src="https://unpkg.com/recharts@2.1.12/umd/Recharts.js"></script>
 
@@ -52,7 +50,6 @@
   <script type="text/babel">
     const { useState, useMemo, useEffect } = React;
     
-    // 安全地從 window.Recharts 解構，避免未載入時直接當機
     const Recharts = window.Recharts || {};
     const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip: RechartsTooltip, Legend, ResponsiveContainer } = Recharts;
 
@@ -73,11 +70,12 @@
     const Database = (props) => <Icon {...props} d={["M21 5c0 1.66-4 3-9 3s-9-1.34-9-3 4-3 9-3 9 1.34 9 3z", "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5", "M3 12c0 1.66 4 3 9 3s9-1.34 9-3"]} />;
     const ShieldCheck = (props) => <Icon {...props} d={["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", "m9 12 2 2 4-4"]} />;
     const Clock = (props) => <Icon {...props} d={["M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z", "M12 6v6l4 2"]} />;
-    const Filter = (props) => <Icon {...props} d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />;
     const CheckCircle = (props) => <Icon {...props} d={["M22 11.08V12a10 10 0 1 1-5.93-9.14", "M22 4L12 14.01l-3-3"]} />;
     const TrendingUp = (props) => <Icon {...props} d={["M23 6l-9.5 9.5-5-5L1 18", "M17 6h6v6"]} />;
     const TrendingDown = (props) => <Icon {...props} d={["M23 18l-9.5-9.5-5 5L1 6", "M17 18h6v-6"]} />;
     const PieChartIcon = (props) => <Icon {...props} d={["M21.21 15.89A10 10 0 1 1 8 2.83", "M22 12A10 10 0 0 0 12 2v10z"]} />;
+    const AlertTriangle = (props) => <Icon {...props} d={["M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z", "M12 9v4", "M12 17h.01"]} />;
+    const Filter = (props) => <Icon {...props} d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />;
 
     const MOCK_DATA = {
       date: "2026-09-03",
@@ -93,6 +91,8 @@
           name: "台股 TWSE / TPEx", code: "TW", currency: "TWD", unit: "億新台幣",
           indexName: "加權指數 (TAIEX)", indexValue: "45,857.66", indexChange: "-0.67%", isPositive: false,
           foreignNet: -185.4, trustNet: 45.2, dealerNet: -15.6,
+          // 🆕 新增：期貨未平倉數據
+          futures: { oi: -28450, change: -1200, unit: "口" },
           history: [
             { day: "08/28", foreign: 210.3, trust: 45.1, dealer: 33.6 },
             { day: "08/31", foreign: 145.8, trust: 32.4, dealer: -18.2 },
@@ -144,7 +144,9 @@
         kr: {
           name: "韓股 KRX Korea", code: "KR", currency: "KRW", unit: "億韓元",
           indexName: "韓國 KOSPI", indexValue: "6,579.48", indexChange: "+0.26%", isPositive: true,
-          foreignNet: -8850.0, trustNet: 2420.0, dealerNet: -1340.0,
+          foreignNet: -3400.0, trustNet: 1540.0, dealerNet: 850.0,
+          // 🆕 新增：期貨未平倉數據
+          futures: { oi: -15200, change: +3200, unit: "Contracts" },
           history: [
             { day: "08/28", foreign: -850.0, trust: 620.0, dealer: 120.0 },
             { day: "08/31", foreign: -1850.0, trust: 920.0, dealer: 240.0 },
@@ -165,18 +167,36 @@
 
     const MOCK_ANALYTICS = {
       cumulativeFlow: [
-        { date: "08/19", tw: 120, jp: -50, kr: 80, tw_cum: 120, jp_cum: -50, kr_cum: 80 },
-        { date: "08/20", tw: -80, jp: -120, kr: -30, tw_cum: 40, jp_cum: -170, kr_cum: 50 },
-        { date: "08/21", tw: 150, jp: 200, kr: -10, tw_cum: 190, jp_cum: 30, kr_cum: 40 },
-        { date: "08/24", tw: -300, jp: -450, kr: -120, tw_cum: -110, jp_cum: -420, kr_cum: -80 },
-        { date: "08/25", tw: -210, jp: -800, kr: -250, tw_cum: -320, jp_cum: -1220, kr_cum: -330 },
-        { date: "08/26", tw: 45, jp: 150, kr: 60, tw_cum: -275, jp_cum: -1070, kr_cum: -270 },
-        { date: "08/27", tw: 200, jp: 1100, kr: 350, tw_cum: -75, jp_cum: 30, kr_cum: 80 },
-        { date: "08/28", tw: 650, jp: 1800, kr: -600, tw_cum: 575, jp_cum: 1830, kr_cum: -520 },
-        { date: "08/31", tw: 450, jp: 1500, kr: -1300, tw_cum: 1025, jp_cum: 3330, kr_cum: -1820 },
-        { date: "09/01", tw: -130, jp: -80, kr: -450, tw_cum: 895, jp_cum: 3250, kr_cum: -2270 },
-        { date: "09/02", tw: -2650, jp: -6100, kr: -6400, tw_cum: -1755, jp_cum: -2850, kr_cum: -8670 },
-        { date: "09/03", tw: -580, jp: -960, kr: -2500, tw_cum: -2335, jp_cum: -3810, kr_cum: -11170 },
+        { date: "07/24", tw: 150, jp: -20, kr: 40, tw_cum: 150, jp_cum: -20, kr_cum: 40 },
+        { date: "07/25", tw: -40, jp: 80, kr: -10, tw_cum: 110, jp_cum: 60, kr_cum: 30 },
+        { date: "07/26", tw: 200, jp: 150, kr: 50, tw_cum: 310, jp_cum: 210, kr_cum: 80 },
+        { date: "07/27", tw: 450, jp: -100, kr: 120, tw_cum: 760, jp_cum: 110, kr_cum: 200 },
+        { date: "07/28", tw: 320, jp: -50, kr: 80, tw_cum: 1080, jp_cum: 60, kr_cum: 280 },
+        { date: "07/31", tw: -150, jp: 400, kr: -90, tw_cum: 930, jp_cum: 460, kr_cum: 190 },
+        { date: "08/01", tw: -300, jp: 220, kr: -150, tw_cum: 630, jp_cum: 680, kr_cum: 40 },
+        { date: "08/02", tw: 120, jp: 350, kr: 50, tw_cum: 750, jp_cum: 1030, kr_cum: 90 },
+        { date: "08/03", tw: 550, jp: 500, kr: 180, tw_cum: 1300, jp_cum: 1530, kr_cum: 270 },
+        { date: "08/04", tw: 410, jp: 800, kr: 220, tw_cum: 1710, jp_cum: 2330, kr_cum: 490 },
+        { date: "08/07", tw: 250, jp: -150, kr: -80, tw_cum: 1960, jp_cum: 2180, kr_cum: 410 },
+        { date: "08/08", tw: -180, jp: -300, kr: -140, tw_cum: 1780, jp_cum: 1880, kr_cum: 270 },
+        { date: "08/09", tw: -450, jp: -600, kr: -250, tw_cum: 1330, jp_cum: 1280, kr_cum: 20 },
+        { date: "08/10", tw: -210, jp: 150, kr: -50, tw_cum: 1120, jp_cum: 1430, kr_cum: -30 },
+        { date: "08/11", tw: -80, jp: 300, kr: 40, tw_cum: 1040, jp_cum: 1730, kr_cum: 10 },
+        { date: "08/14", tw: 120, jp: -50, kr: 80, tw_cum: 1160, jp_cum: 1680, kr_cum: 90 },
+        { date: "08/15", tw: -80, jp: -120, kr: -30, tw_cum: 1080, jp_cum: 1560, kr_cum: 60 },
+        { date: "08/16", tw: 150, jp: 200, kr: -10, tw_cum: 1230, jp_cum: 1760, kr_cum: 50 },
+        { date: "08/19", tw: -300, jp: -450, kr: -120, tw_cum: 930, jp_cum: 1310, kr_cum: -70 },
+        { date: "08/20", tw: -210, jp: -800, kr: -250, tw_cum: 720, jp_cum: 510, kr_cum: -320 },
+        { date: "08/21", tw: 45, jp: 150, kr: 60, tw_cum: 765, jp_cum: 660, kr_cum: -260 },
+        { date: "08/24", tw: 200, jp: 1100, kr: 350, tw_cum: 965, jp_cum: 1760, kr_cum: 90 },
+        { date: "08/25", tw: 650, jp: 1800, kr: -600, tw_cum: 1615, jp_cum: 3560, kr_cum: -510 },
+        { date: "08/26", tw: 450, jp: 1500, kr: -1300, tw_cum: 2065, jp_cum: 5060, kr_cum: -1810 },
+        { date: "08/27", tw: -130, jp: -80, kr: -450, tw_cum: 1935, jp_cum: 4980, kr_cum: -2260 },
+        { date: "08/28", tw: 350, jp: 200, kr: -150, tw_cum: 2285, jp_cum: 5180, kr_cum: -2410 },
+        { date: "08/31", tw: 150, jp: 180, kr: -250, tw_cum: 2435, jp_cum: 5360, kr_cum: -2660 },
+        { date: "09/01", tw: -180, jp: -50, kr: -320, tw_cum: 2255, jp_cum: 5310, kr_cum: -2980 },
+        { date: "09/02", tw: -2650, jp: -6100, kr: -6400, tw_cum: -395, jp_cum: -790, kr_cum: -9380 },
+        { date: "09/03", tw: -580, jp: -960, kr: -2500, tw_cum: -975, jp_cum: -1750, kr_cum: -11880 },
       ],
       sectorHeatmap: [
         { sector: "晶圓代工 (TW)", flow: -2410, total: 3000 },
@@ -254,15 +274,15 @@
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 sm:space-x-3">
                   <button onClick={exportCSV} className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded transition-all hover:border-zinc-600 group" title="匯出 CSV">
                     <Download className="w-3.5 h-3.5 text-white group-hover:text-cyan-400 transition-colors" />
                     <span className="text-white group-hover:text-cyan-400 transition-colors">EXPORT</span>
                   </button>
 
                   <div className="bg-zinc-900 p-1 rounded border border-zinc-800 flex text-xs font-mono">
-                    <button onClick={() => setSelectedCurrency('LOCAL')} className={`px-3 py-1 rounded transition-all hover:text-cyan-400 ${selectedCurrency === 'LOCAL' ? 'bg-zinc-800 text-white border border-zinc-500 shadow-sm' : 'text-zinc-500'}`}>LOCAL</button>
-                    <button onClick={() => setSelectedCurrency('USD')} className={`px-3 py-1 rounded transition-all hover:text-cyan-400 ${selectedCurrency === 'USD' ? 'bg-zinc-800 text-white border border-zinc-500 shadow-sm' : 'text-zinc-500'}`}>USD ($)</button>
+                    <button onClick={() => setSelectedCurrency('LOCAL')} className={`px-2 sm:px-3 py-1 rounded transition-all hover:text-cyan-400 ${selectedCurrency === 'LOCAL' ? 'bg-zinc-800 text-white border border-zinc-500 shadow-sm' : 'text-zinc-500'}`}>LOCAL</button>
+                    <button onClick={() => setSelectedCurrency('USD')} className={`px-2 sm:px-3 py-1 rounded transition-all hover:text-cyan-400 ${selectedCurrency === 'USD' ? 'bg-zinc-800 text-white border border-zinc-500 shadow-sm' : 'text-zinc-500'}`}>USD ($)</button>
                   </div>
 
                   <button onClick={handleRefresh} className="w-8 h-8 flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 rounded border border-zinc-800 transition-all group" title="即時同步">
@@ -275,7 +295,7 @@
               <div className="bg-zinc-950 border-t border-zinc-900 h-10 flex items-center justify-center font-mono text-[11px] w-full shadow-inner">
                 <div className="flex items-center space-x-6 overflow-x-auto no-scrollbar px-4 w-full justify-center max-w-7xl">
                   <div className="bg-zinc-900 border border-zinc-700 px-3 py-1 rounded font-bold text-zinc-400 shrink-0 flex items-center">
-                    DAILY CLOSE 09/03
+                    DAILY CLOSE
                   </div>
                   <div className="flex items-center space-x-8 text-zinc-300 shrink-0">
                      {Object.values(MOCK_DATA.indices).map((idx, i) => (
@@ -417,95 +437,6 @@
       );
     }
 
-    function MultiVerificationPanel() {
-      const [verifying, setVerifying] = useState(false);
-      const [verifyProgress, setVerifyProgress] = useState(100);
-      
-      const [status, setStatus] = useState({
-        tw: { main: "TWSE API", secondary: "TPEx Feed", dom: "VERIFIED", for: "VERIFIED", time: "14:35 CST" },
-        jp: { main: "JPX English", secondary: "TSE Core", dom: "VERIFIED", for: "VERIFIED", time: "15:20 CST" },
-        kr: { main: "KRX MDC", secondary: "KOSPI Clear", dom: "VERIFIED", for: "VERIFIED", time: "16:05 CST" },
-      });
-
-      const handleReverify = () => {
-        setVerifying(true);
-        setVerifyProgress(0);
-        
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 20;
-          setVerifyProgress(progress);
-          if (progress >= 100) {
-            clearInterval(interval);
-            setVerifying(false);
-            const nowTime = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' }) + " CST";
-            setStatus({
-              tw: { main: "TWSE API", secondary: "TPEx Feed", dom: "SYNCED (12ms)", for: "SYNCED (15ms)", time: nowTime },
-              jp: { main: "JPX English", secondary: "TSE Core", dom: "SYNCED (45ms)", for: "SYNCED (41ms)", time: nowTime },
-              kr: { main: "KRX MDC", secondary: "KOSPI Clear", dom: "SYNCED (28ms)", for: "SYNCED (30ms)", time: nowTime },
-            });
-          }
-        }, 200);
-      };
-
-      const VerificationCard = ({ market, data, title }) => (
-        <div className="bg-zinc-900/40 border border-zinc-800/80 p-4 rounded-md space-y-3 relative overflow-hidden group hover:border-zinc-700 transition-all">
-          {verifying && (
-            <div className="absolute inset-0 bg-zinc-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-               <RefreshCw className="w-5 h-5 text-cyan-400 animate-spin mb-2" />
-               <div className="text-[10px] text-cyan-400 font-mono">CROSS-CHECKING... {verifyProgress}%</div>
-            </div>
-          )}
-          <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-            <span className="text-white font-bold text-sm">{title}</span>
-            <span className="flex items-center text-[10px] px-2 py-0.5 bg-emerald-950/50 text-emerald-400 border border-emerald-800/50 rounded">
-              <CheckCircle className="w-3 h-3 mr-1" /> DATA MATCH
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-            <div className="space-y-1 bg-zinc-950 p-2 rounded border border-zinc-800/50">
-              <div className="text-zinc-500">外資 (FOREIGN)</div>
-              <div className="text-emerald-400 flex items-center"><ShieldCheck className="w-3 h-3 mr-1"/> {data.for}</div>
-            </div>
-            <div className="space-y-1 bg-zinc-950 p-2 rounded border border-zinc-800/50">
-              <div className="text-zinc-500">內資 (DOMESTIC)</div>
-              <div className="text-emerald-400 flex items-center"><ShieldCheck className="w-3 h-3 mr-1"/> {data.dom}</div>
-            </div>
-          </div>
-          <div className="pt-2 text-[10px] text-zinc-500 flex justify-between items-center">
-             <span>P: {data.main} / S: {data.secondary}</span>
-             <span className="text-cyan-500">AT {data.time}</span>
-          </div>
-        </div>
-      );
-
-      return (
-        <div className="bg-zinc-950 border border-zinc-800/80 p-5 rounded-md font-mono space-y-4 shadow-xl relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-900 via-emerald-800 to-cyan-900"></div>
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-900">
-            <div className="flex items-center space-x-2 text-white">
-              <Database className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-xs font-bold tracking-wider">INSTITUTIONAL DATA CROSS-VERIFICATION (內外資多重確認引擎)</h3>
-            </div>
-            <button 
-              onClick={handleReverify}
-              disabled={verifying}
-              className="px-3 py-1.5 text-[11px] bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 rounded transition-all hover:border-zinc-600 flex items-center space-x-1.5 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${verifying ? 'animate-spin text-cyan-400' : ''}`} />
-              <span>RUN INTEGRITY CHECK</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <VerificationCard market="tw" data={status.tw} title="TWSE / TPEx (台灣)" />
-            <VerificationCard market="jp" data={status.jp} title="JPX Group (日本)" />
-            <VerificationCard market="kr" data={status.kr} title="KRX Korea (韓國)" />
-          </div>
-        </div>
-      );
-    }
-
     function MarketCard({ market, valUSD, isUSD, onClick }) {
       const displayVal = isUSD ? valUSD : market.foreignNet;
       const unit = isUSD ? 'M USD' : market.unit;
@@ -576,6 +507,29 @@
             <DataBox label="TRUST_FUNDS (投信/內資)" value={market.trustNet} unit={market.unit} type="trust" />
             <DataBox label="DEALERS (自營商/內資)" value={market.dealerNet} unit={market.unit} type="dealer" />
           </div>
+
+          {/* 🆕 外資期貨未平倉先導指標 (TW & KR) */}
+          {market.futures && (
+            <div className="bg-zinc-900/60 border border-purple-900/40 p-4 rounded-md shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-purple-800/60 transition-colors">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-purple-900/30 flex items-center justify-center border border-purple-800/50">
+                   <AlertTriangle className="w-4 h-4 text-purple-400" />
+                </div>
+                <div className="font-mono">
+                  <div className="text-[10px] text-purple-400/80 uppercase tracking-widest mb-0.5">LEADING_INDICATOR // 先導指標</div>
+                  <div className="text-sm font-bold text-zinc-200">外資期貨淨未平倉部位 (Foreign Futures Net OI)</div>
+                </div>
+              </div>
+              <div className="text-right font-mono self-end sm:self-auto">
+                <div className={`text-xl font-black ${market.futures.oi >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                  {market.futures.oi > 0 ? '+' : ''}{market.futures.oi.toLocaleString()} <span className="text-xs font-normal text-zinc-500">{market.futures.unit}</span>
+                </div>
+                <div className="text-[10px] text-zinc-500 mt-1">
+                  與前日相比增減: <span className={`font-bold ${market.futures.change >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>{market.futures.change > 0 ? '+' : ''}{market.futures.change.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-zinc-950 border border-zinc-800/80 rounded-md overflow-hidden font-mono shadow-lg">
             <div className="px-5 py-3 border-b border-zinc-900 flex items-center justify-between bg-zinc-900/30">
@@ -680,8 +634,98 @@
       );
     }
 
+    function MultiVerificationPanel() {
+      const [verifying, setVerifying] = useState(false);
+      const [verifyProgress, setVerifyProgress] = useState(100);
+      
+      const [status, setStatus] = useState({
+        tw: { main: "TWSE API", secondary: "TPEx Feed", dom: "VERIFIED", for: "VERIFIED", time: "14:35 CST" },
+        jp: { main: "JPX English", secondary: "TSE Core", dom: "VERIFIED", for: "VERIFIED", time: "15:20 CST" },
+        kr: { main: "KRX MDC", secondary: "KOSPI Clear", dom: "VERIFIED", for: "VERIFIED", time: "16:05 CST" },
+      });
+
+      const handleReverify = () => {
+        setVerifying(true);
+        setVerifyProgress(0);
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 20;
+          setVerifyProgress(progress);
+          if (progress >= 100) {
+            clearInterval(interval);
+            setVerifying(false);
+            const nowTime = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' }) + " CST";
+            setStatus({
+              tw: { main: "TWSE API", secondary: "TPEx Feed", dom: "SYNCED (12ms)", for: "SYNCED (15ms)", time: nowTime },
+              jp: { main: "JPX English", secondary: "TSE Core", dom: "SYNCED (45ms)", for: "SYNCED (41ms)", time: nowTime },
+              kr: { main: "KRX MDC", secondary: "KOSPI Clear", dom: "SYNCED (28ms)", for: "SYNCED (30ms)", time: nowTime },
+            });
+          }
+        }, 200);
+      };
+
+      const VerificationCard = ({ market, data, title }) => (
+        <div className="bg-zinc-900/40 border border-zinc-800/80 p-4 rounded-md space-y-3 relative overflow-hidden group hover:border-zinc-700 transition-all">
+          {verifying && (
+            <div className="absolute inset-0 bg-zinc-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+               <RefreshCw className="w-5 h-5 text-cyan-400 animate-spin mb-2" />
+               <div className="text-[10px] text-cyan-400 font-mono">CROSS-CHECKING... {verifyProgress}%</div>
+            </div>
+          )}
+          <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
+            <span className="text-white font-bold text-sm">{title}</span>
+            <span className="flex items-center text-[10px] px-2 py-0.5 bg-emerald-950/50 text-emerald-400 border border-emerald-800/50 rounded">
+              <CheckCircle className="w-3 h-3 mr-1" /> DATA MATCH
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+            <div className="space-y-1 bg-zinc-950 p-2 rounded border border-zinc-800/50">
+              <div className="text-zinc-500">外資 (FOREIGN)</div>
+              <div className="text-emerald-400 flex items-center"><ShieldCheck className="w-3 h-3 mr-1"/> {data.for}</div>
+            </div>
+            <div className="space-y-1 bg-zinc-950 p-2 rounded border border-zinc-800/50">
+              <div className="text-zinc-500">內資 (DOMESTIC)</div>
+              <div className="text-emerald-400 flex items-center"><ShieldCheck className="w-3 h-3 mr-1"/> {data.dom}</div>
+            </div>
+          </div>
+          <div className="pt-2 text-[10px] text-zinc-500 flex justify-between items-center">
+             <span>P: {data.main} / S: {data.secondary}</span>
+             <span className="text-cyan-500">AT {data.time}</span>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="bg-zinc-950 border border-zinc-800/80 p-5 rounded-md font-mono space-y-4 shadow-xl relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-900 via-emerald-800 to-cyan-900"></div>
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-900">
+            <div className="flex items-center space-x-2 text-white">
+              <Database className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-xs font-bold tracking-wider">INSTITUTIONAL DATA CROSS-VERIFICATION (內外資多重確認引擎)</h3>
+            </div>
+            <button 
+              onClick={handleReverify}
+              disabled={verifying}
+              className="px-3 py-1.5 text-[11px] bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 rounded transition-all hover:border-zinc-600 flex items-center space-x-1.5 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${verifying ? 'animate-spin text-cyan-400' : ''}`} />
+              <span>RUN INTEGRITY CHECK</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <VerificationCard market="tw" data={status.tw} title="TWSE / TPEx (台灣)" />
+            <VerificationCard market="jp" data={status.jp} title="JPX Group (日本)" />
+            <VerificationCard market="kr" data={status.kr} title="KRX Korea (韓國)" />
+          </div>
+        </div>
+      );
+    }
+
     function AnalyticsTab({ data }) {
-      // 確保 Recharts 成功載入，否則顯示安全提示 (Fallback UI)
+      const [timeframe, setTimeframe] = useState('14D');
+
       if (!LineChart || !ResponsiveContainer) {
         return (
           <div className="flex flex-col items-center justify-center h-64 bg-zinc-950 border border-zinc-800/80 rounded-md text-zinc-500 font-mono space-y-4">
@@ -691,21 +735,33 @@
         );
       }
 
+      const sliceCount = timeframe === '7D' ? -7 : timeframe === '14D' ? -14 : -30;
+      const chartData = data.cumulativeFlow.slice(sliceCount);
+
       return (
         <div className="space-y-6 animate-in fade-in duration-500">
           
           <div className="bg-zinc-950 border border-zinc-800/80 p-5 rounded-md shadow-lg">
-             <div className="flex items-center justify-between pb-4 border-b border-zinc-900 mb-6">
+             <div className="flex flex-wrap gap-4 items-center justify-between pb-4 border-b border-zinc-900 mb-6">
                 <div className="flex items-center space-x-2 font-mono text-white">
                   <BarChart3 className="w-5 h-5 text-cyan-400" />
-                  <h3 className="text-sm font-bold tracking-wider uppercase">14-Day Cumulative Capital Flow (累積籌碼曲線)</h3>
+                  <h3 className="text-sm font-bold tracking-wider uppercase">Cumulative Capital Flow (累積籌碼趨勢)</h3>
                 </div>
-                <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded">UNIT: M USD (百萬美元)</span>
+                
+                {/* 🆕 時間區間切換按鈕 */}
+                <div className="flex items-center space-x-3">
+                  <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-2 py-1 rounded hidden sm:block">UNIT: M USD</span>
+                  <div className="flex bg-zinc-900 rounded border border-zinc-700 overflow-hidden text-xs font-mono">
+                    <button onClick={() => setTimeframe('7D')} className={`px-4 py-1.5 transition-colors ${timeframe === '7D' ? 'bg-zinc-700 text-white shadow-inner' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}>7D</button>
+                    <button onClick={() => setTimeframe('14D')} className={`px-4 py-1.5 transition-colors border-l border-zinc-800 ${timeframe === '14D' ? 'bg-zinc-700 text-white shadow-inner' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}>14D</button>
+                    <button onClick={() => setTimeframe('30D')} className={`px-4 py-1.5 transition-colors border-l border-zinc-800 ${timeframe === '30D' ? 'bg-zinc-700 text-white shadow-inner' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}>30D</button>
+                  </div>
+                </div>
              </div>
              
              <div className="h-80 w-full font-mono text-xs">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.cumulativeFlow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                     <XAxis dataKey="date" stroke="#71717a" tick={{fill: '#71717a'}} tickMargin={10} axisLine={false} tickLine={false} />
                     <YAxis stroke="#71717a" tick={{fill: '#71717a'}} axisLine={false} tickLine={false} tickFormatter={(val) => `${val > 0 ? '+' : ''}${val}`} />
@@ -719,7 +775,7 @@
              </div>
              <div className="mt-4 text-[11px] text-zinc-500 font-sans border-t border-zinc-900/50 pt-3 flex items-start gap-2">
                 <Activity className="w-4 h-4 text-cyan-700 shrink-0 mt-0.5" />
-                <p><strong>洞察：</strong>外資在 8 月下旬曾短暫回流台日市場，但隨即在 9 月 2 日與 3 日出現斷崖式同步連續撤出。韓國股市則因記憶體前景疑慮，近 14 日呈現持續性資金外流趨勢，確認為波段連續性撤資。</p>
+                <p><strong>動態洞察 ({timeframe})：</strong>切換時間軸可觀察極短期反彈或中長期趨勢。目前顯示外資在 9 月初出現斷崖式同步連續撤出。韓國股市因記憶體前景疑慮，更是呈現長達一個月的資金持續外流趨勢。</p>
              </div>
           </div>
 
